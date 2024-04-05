@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from userdb import UserDB
 from config import *
 from utils import *
 
@@ -7,6 +8,7 @@ from utils import *
 client = commands.Bot(command_prefix=COMMAND_PREFIX,
                       intents=discord.Intents.all())
 history = []
+userdb = UserDB()
 
 
 @client.event
@@ -21,19 +23,13 @@ async def on_message(message: discord.Message):
         return
 
     if message.content.startswith(CHAT_PREFIX):
+        data = userdb.get_user(message.author.id)
         content = message.content[len(CHAT_PREFIX):]
         print(f'{message.author.name}: {content}')
-        if len(history) > HISTORY_LIMIT:
-            history = history[-HISTORY_LIMIT:]
-        history.append({'role': 'user',
-                        'content': content})
-        reply = await make_completion([{'role': 'system',
-                                        'content': PROMPT}] + history)
-        history.append({"role": "assistant",
-                        "content": reply})
+        reply = await make_completion(data, content)
         print(f'{client.user.name}: {reply}')
-        voice = discord.utils.get(client.voice_clients, guild=message.guild)
 
+        voice = discord.utils.get(client.voice_clients, guild=message.guild)
         if voice:
             async with message.channel.typing():
                 await Voice(voice, VOICE_ID, reply)
@@ -61,5 +57,22 @@ async def leave(ctx: commands.Context):
         await ctx.channel.send("The Bot is not connected to a voice channel")
     else:
         await voice.disconnect()
+
+
+@client.command(name='show')
+async def show(ctx: commands.Context, *args):
+    data = userdb.get_user(ctx.author.id)
+    output = ''
+    if len(args) == 0:
+        args = data.keys()
+    for name in args:
+        output += f'\n{name}: {data[name]}'
+    await ctx.channel.send(f'```{output}```')
+
+
+@client.command(name='set')
+async def set(ctx: commands.Context, *args):
+    response = userdb.set_data(ctx.author.id, args[0], ' '.join(args[1:]))
+    await ctx.channel.send(response)
 
 client.run(TOKEN)

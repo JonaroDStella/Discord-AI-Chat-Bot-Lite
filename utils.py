@@ -6,6 +6,7 @@ from config import *
 
 openai.api_key = OPENAI_API_KEY
 
+
 def split_message(message: str) -> list[str]:
     messages = []
     while len(message) > 2000:
@@ -62,8 +63,18 @@ def speak(host, port, text: str, speaker: int, filename='temp'):
         f.write(res.content)
 
 
-async def make_completion(messages: str):
+async def make_completion(data, message) -> tuple[bool, str]:
+    history: list = data['history']
+    history.append({'role': 'user', 'content': message})
+    if len(history) > data['limit']:
+        history = history[-data['limit']:]
+
     completion = openai.ChatCompletion.create(
-        model='gpt-3.5-turbo',
-        messages=messages)
-    return completion.choices[0].message.content
+        model=MODEL,
+        messages=[
+            {'role': 'system', 'content': data['prompt']}] + data['history']
+    )
+    reply: str = completion.choices[0].message.content
+    history.append({"role": "assistant", "content": reply})
+    data['history'] = history
+    return reply
