@@ -9,7 +9,8 @@ class UserDB:
         if id not in self.users.keys():
             self.users[id] = {'prompt': PROMPT,
                               'limit': HISTORY_LIMIT,
-                              'history' : []}
+                              'voice_id': VOICE_ID,
+                              'history': []}
         return self.users[id]
 
     def set_data(self, id: int, name, value) -> str:

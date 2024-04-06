@@ -32,7 +32,7 @@ async def on_message(message: discord.Message):
         voice = discord.utils.get(client.voice_clients, guild=message.guild)
         if voice:
             async with message.channel.typing():
-                await Voice(voice, VOICE_ID, reply)
+                await Voice(voice, data['voice_id'], reply)
 
         for splited in split_message(reply):
             await message.channel.send(splited)
