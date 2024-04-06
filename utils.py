@@ -63,7 +63,7 @@ def speak(host, port, text: str, speaker: int, filename='temp'):
         f.write(res.content)
 
 
-async def make_completion(data, message) -> tuple[bool, str]:
+async def make_completion(data, message) -> str:
     history: list = data['history']
     history.append({'role': 'user', 'content': message})
     if len(history) > data['limit']:
